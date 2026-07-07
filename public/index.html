@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>二级站点扎数统计工具</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: #222; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #222;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .card-title::before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 16px;
+      background: #333;
+      border-radius: 2px;
+    }
+
+    .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+    .form-group label { font-size: 13px; color: #666; font-weight: 500; }
+    input[type="text"], input[type="month"], select {
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+      height: 40px;
+    }
+    input:focus { border-color: #1890ff; }
+
+    .upload-zone {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafafa;
+    }
+    .upload-zone:hover { border-color: #999; background: #f5f5f5; }
+    .upload-zone.has-file { border-color: #1890ff; background: #e6f7ff; }
+    .upload-zone .icon { font-size: 32px; margin-bottom: 8px; color: #999; }
+    .upload-zone .hint { font-size: 13px; color: #999; }
+    .upload-zone .filename { font-size: 14px; color: #333; font-weight: 500; }
+    input[type="file"] { display: none; }
+
+    .location-list { display: flex; flex-direction: column; gap: 8px; }
+    .location-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; background: #fafafa; border-radius: 6px; border: 1px solid #eee;
+    }
+    .location-item input {
+      padding: 7px 10px; border: 1px solid #ddd; border-radius: 4px;
+      font-size: 13px; outline: none; flex: 1; height: 36px;
+    }
+    .location-item input:focus { border-color: #1890ff; }
+    .location-item .loc-name { flex: 0 0 120px; }
+    .btn-icon {
+      width: 28px; height: 28px; border: none; background: #eee;
+      border-radius: 4px; cursor: pointer; font-size: 16px; color: #666;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .btn-icon:hover { background: #ff4d4f; color: #fff; }
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 8px 14px; border: 1px solid #1890ff; background: #fff;
+      border-radius: 6px; cursor: pointer; font-size: 13px; color: #1890ff;
+      margin-top: 8px; transition: all 0.2s; height: 36px;
+    }
+    .btn-add:hover { background: #1890ff; color: #fff; }
+    .btn-add:active { transform: scale(0.95); }
+
+    .switch-wrap {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px; background: #fafafa; border-radius: 6px; border: 1px solid #eee;
+      cursor: pointer;
+    }
+    .switch-wrap input[type="checkbox"] {
+      appearance: none; width: 44px; height: 24px; background: #ccc;
+      border-radius: 12px; cursor: pointer; position: relative; transition: background 0.2s;
+      outline: none; border: none; flex-shrink: 0;
+    }
+    .switch-wrap input[type="checkbox"]:checked { background: #1890ff; }
+    .switch-wrap input[type="checkbox"]::after {
+      content: ""; position: absolute; width: 20px; height: 20px; background: #fff;
+      border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .switch-wrap input[type="checkbox"]:checked::after { transform: translateX(20px); }
+    .switch-label { font-size: 14px; color: #444; }
+    .switch-hint { font-size: 12px; color: #999; margin-left: auto; }
+
+    .btn-primary {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 14px 28px; background: #1890ff; color: #fff;
+      border: none; border-radius: 8px; font-size: 15px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; width: 100%; min-height: 56px;
+    }
+    .btn-primary:hover { background: #40a9ff; transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    .preview-card {
+      background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
+      border: 1px solid #91d5ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .preview-badge {
+      display: inline-block; padding: 2px 8px; background: #1890ff; color: #fff;
+      font-size: 11px; border-radius: 4px; margin-bottom: 8px;
+    }
+    .preview-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      background: #fff; border-radius: 6px; overflow: hidden;
+      border: 1px solid #d9d9d9;
+    }
+    .preview-table th, .preview-table td {
+      padding: 8px 10px; text-align: center; border: 1px solid #e8e8e8;
+    }
+    .preview-table th { background: #f8f8f8; font-weight: 600; color: #444; }
+    .preview-table .col-index { width: 30px; color: #999; font-size: 11px; }
+    .preview-table .col-empty { background: #fafafa; color: #ccc; border-style: dashed; }
+    .preview-table .col-c { width: 90px; }
+    .preview-table .col-total { font-weight: 600; }
+    .preview-table .title-row td {
+      font-size: 14px; font-weight: 600; background: #f0f0f0; padding: 12px;
+    }
+    .preview-table .ellipsis td { color: #999; font-size: 16px; padding: 4px; }
+
+    .loading { display: none; text-align: center; padding: 40px; color: #999; font-size: 14px; }
+    .loading.show { display: block; }
+
+    .error-msg {
+      color: #c44; font-size: 13px; padding: 10px 12px;
+      background: #fff0f0; border-radius: 6px; margin-top: 8px; display: none;
+    }
+    .error-msg.show { display: block; }
+    .info-msg {
+      color: #389e0d; font-size: 13px; padding: 10px 12px;
+      background: #f6ffed; border-radius: 6px; margin-top: 8px; display: none;
+    }
+    .info-msg.show { display: block; }
+
+    .debug-info {
+      background: #f6fffe; border: 1px solid #b7eb8f;
+      border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+      font-size: 13px; color: #333;
+    }
+    .debug-info .debug-title { font-weight: 600; margin-bottom: 8px; color: #389e0d; }
+    .debug-info .warn { color: #d4380d; font-weight: 600; margin-top: 8px; }
+
+    .result-table-wrap { overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 6px; }
+    .result-table {
+      width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px;
+    }
+    .result-table th, .result-table td {
+      padding: 10px 12px; text-align: center; border: 1px solid #e8e8e8; white-space: nowrap;
+    }
+    .result-table th { background: #f8f8f8; font-weight: 600; color: #444; position: sticky; top: 0; }
+    .result-table tr:nth-child(even) td { background: #fafafa; }
+    .result-table tr.total-row td { background: #f5f5f5; font-weight: 600; border-top: 2px solid #d9d9d9; }
+
+    @media (max-width: 768px) {
+      .container { padding: 12px; }
+      .form-row { flex-direction: column; }
+      .switch-hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>二级站点扎数统计工具</h1>
+
+    <div class="card">
+      <div class="card-title">🔌 后端连接</div>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">
+        请输入您电脑上的后端服务地址（通过内网穿透工具获取，如 ngrok、花生壳等）
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:2;">
+          <label>后端 API 地址</label>
+          <input type="text" id="apiUrl" placeholder="https://xxx.ngrok-free.app" value="">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>&nbsp;</label>
+          <button class="btn-primary" style="min-height:40px;font-size:13px;" onclick="testConnection()">测试连接</button>
+        </div>
+      </div>
+      <div id="connStatus" style="font-size:12px;margin-top:8px;color:#999;">
+        状态：未配置
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">月份配置</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>选择月份</label>
+          <input type="month" id="monthInput" value="2026-05">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">地点配置</div>
+      <div class="location-list" id="locationList"></div>
+      <button class="btn-add" id="addLocationBtn" onclick="addLocation()">+ 添加地点</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">筛选条件</div>
+      <label class="switch-wrap" for="filterToggle" style="cursor:pointer;">
+        <input type="checkbox" id="filterToggle" />
+        <span class="switch-label">筛去包干费为 0 的记录</span>
+        <span class="switch-hint">开启后，包干费代收为 0 的销售记录不参与统计</span>
+      </label>
+    </div>
+
+    <div class="preview-card" id="previewCard">
+      <div class="preview-badge">实时预览</div>
+      <div style="font-size:13px;color:#666;margin-bottom:12px;">
+        以下预览根据当前月份和地点配置自动生成，展示最终导出Excel的格式
+      </div>
+      <div id="previewTable"></div>
+      <div style="font-size:12px;color:#999;margin-top:8px;">
+        💡 实际数据将在导入明细表后填充，此处仅展示模板结构
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">导入明细表</div>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="icon">&#128196;</div>
+        <div class="hint" id="uploadHint">点击或拖拽上传 Excel 明细表</div>
+        <div class="filename" id="uploadFilename" style="display:none;"></div>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(event)">
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="info-msg" id="infoMsg"></div>
+    </div>
+
+    <div class="actions" style="margin-bottom:24px;">
+      <button class="btn-primary" id="generateBtn" onclick="generateReport()" disabled>
+        <span id="btnText">生成报表</span>
+      </button>
+    </div>
+
+    <div class="loading" id="loading">正在处理数据，请稍候...</div>
+
+    <div id="resultArea"></div>
+  </div>
+
+  <script>
+    // ==================== State ====================
+    let uploadedFile = null;
+    let filterBaogan = false;
+    let API_BASE_URL = '';
+
+    const defaultLocations = [
+      { name: '英山', match: '英山' },
+      { name: '武穴', match: '武穴' },
+      { name: '黄梅', match: '黄梅' }
+    ];
+    let locations = JSON.parse(JSON.stringify(defaultLocations));
+
+    // ==================== Init ====================
+    function init() {
+      refreshLocations();
+      renderPreview();
+      
+      // 加载保存的后端地址
+      const savedUrl = localStorage.getItem('apiBaseUrl');
+      if (savedUrl) {
+        document.getElementById('apiUrl').value = savedUrl;
+        API_BASE_URL = savedUrl;
+        updateConnStatus('已配置：' + savedUrl, '#1890ff');
+      }
+      
+      document.getElementById('apiUrl').addEventListener('change', (e) => {
+        const url = e.target.value.trim();
+        if (url) {
+          API_BASE_URL = url.replace(/\/$/, '');
+          localStorage.setItem('apiBaseUrl', API_BASE_URL);
+          updateConnStatus('已保存：' + API_BASE_URL, '#1890ff');
+        }
+      });
+      
+      document.getElementById('filterToggle').addEventListener('change', (e) => {
+        filterBaogan = e.target.checked;
+      });
+      document.getElementById('monthInput').addEventListener('change', renderPreview);
+
+      // Drag & drop
+      const uploadZone = document.getElementById('uploadZone');
+      uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = '#1890ff'; });
+      uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.style.borderColor = ''; });
+      uploadZone.addEventListener('drop', e => {
+        e.preventDefault(); uploadZone.style.borderColor = '';
+        if (e.dataTransfer.files.length > 0) {
+          document.getElementById('fileInput').files = e.dataTransfer.files;
+          handleFile({ target: { files: e.dataTransfer.files } });
+        }
+      });
+    }
+
+    function refreshLocations() {
+      const list = document.getElementById('locationList');
+      list.innerHTML = '';
+      locations.forEach((loc, i) => {
+        const div = document.createElement('div');
+        div.className = 'location-item';
+        div.innerHTML = `
+          <input class="loc-name" placeholder="显示名称" value="${loc.name}" onchange="updateLoc(${i},'name',this.value);renderPreviewDebounced()">
+          <input class="loc-match" placeholder="匹配关键词" value="${loc.match}" onchange="updateLoc(${i},'match',this.value)">
+          <button class="btn-icon" onclick="removeLoc(${i})" title="删除">&times;</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    let previewTimer;
+    function renderPreviewDebounced() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(renderPreview, 300);
+    }
+
+    function addLocation() {
+      locations.push({ name: '', match: '' });
+      refreshLocations();
+      renderPreviewDebounced();
+    }
+
+    function removeLoc(i) {
+      locations.splice(i, 1);
+      refreshLocations();
+      renderPreviewDebounced();
+    }
+
+    function updateLoc(i, field, val) {
+      locations[i][field] = val.trim();
+    }
+
+    function updateConnStatus(text, color) {
+      const el = document.getElementById('connStatus');
+      el.textContent = '状态：' + text;
+      el.style.color = color || '#999';
+    }
+
+    async function testConnection() {
+      const url = document.getElementById('apiUrl').value.trim();
+      if (!url) {
+        updateConnStatus('请先输入后端地址', '#d4380d');
+        return;
+      }
+      API_BASE_URL = url.replace(/\/$/, '');
+      localStorage.setItem('apiBaseUrl', API_BASE_URL);
+      updateConnStatus('测试中...', '#999');
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/`, { method: 'GET', mode: 'cors' });
+        if (response.ok) {
+          updateConnStatus('连接成功！', '#389e0d');
+        } else {
+          updateConnStatus('连接失败 (HTTP ' + response.status + ')', '#d4380d');
+        }
+      } catch (err) {
+        updateConnStatus('连接失败：' + err.message, '#d4380d');
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+    function showInfo(msg) {
+      const el = document.getElementById('infoMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ==================== File Upload ====================
+    function handleFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        showError('请上传 .xlsx 或 .xls 格式的 Excel 文件');
+        return;
+      }
+      uploadedFile = file;
+      document.getElementById('uploadHint').style.display = 'none';
+      document.getElementById('uploadFilename').style.display = 'block';
+      document.getElementById('uploadFilename').textContent = file.name;
+      document.getElementById('uploadZone').classList.add('has-file');
+      document.getElementById('generateBtn').disabled = false;
+      showInfo('文件已上传：' + file.name);
+    }
+
+    // ==================== Preview ====================
+    function renderPreview() {
+      const monthVal = document.getElementById('monthInput').value;
+      if (!monthVal) return;
+      const [year, month] = monthVal.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const locCount = locations.length;
+      const validLocs = locations.filter(l => l.name.trim());
+
+      let thead = '<tr><th class="col-index"></th><th class="col-c">日期</th>';
+      for (let i = 0; i < Math.max(locCount, 3); i++) {
+        if (i < validLocs.length) thead += `<th>${validLocs[i].name}</th>`;
+        else thead += '<th class="col-empty">-</th>';
+      }
+      for (let i = 0; i < 3; i++) thead += '<th class="col-empty">-</th>';
+      thead += '<th class="col-total">合计</th></tr>';
+
+      let tbody = '';
+      const sampleDays = [1, 2, 3, 4, 5];
+      const ellipsisColspan = 5 + Math.max(locCount, 3);
+      sampleDays.forEach(day => {
+        tbody += `<tr><td class="col-index">${day}</td><td class="col-c">${month}/${String(day).padStart(2,'0')}</td>`;
+        for (let i = 0; i < Math.max(locCount, 3); i++) tbody += '<td>-</td>';
+        for (let i = 0; i < 3; i++) tbody += '<td class="col-empty">-</td>';
+        tbody += '<td class="col-total">-</td></tr>';
+      });
+      tbody += `<tr class="ellipsis"><td class="col-index"></td><td colspan="${ellipsisColspan}">⋯</td></tr>`;
+      tbody += '<tr style="border-top:2px solid #d9d9d9;"><td class="col-index"></td><td class="col-c" style="font-weight:600;">合计</td>';
+      for (let i = 0; i < Math.max(locCount, 3); i++) tbody += '<td style="font-weight:600;">-</td>';
+      for (let i = 0; i < 3; i++) tbody += '<td class="col-empty" style="font-weight:600;">-</td>';
+      tbody += '<td class="col-total" style="font-weight:600;">-</td></tr>';
+
+      document.getElementById('previewTable').innerHTML = `
+        <table class="preview-table">
+          <thead><tr class="title-row"><td colspan="${6 + Math.max(locCount, 3)}">黄冈仓${month}月份二级站点扎数总计</td></tr>${thead}</thead>
+          <tbody>${tbody}</tbody>
+        </table>`;
+    }
+
+    // ==================== Generate Report ====================
+    async function generateReport() {
+      const monthVal = document.getElementById('monthInput').value;
+      if (!monthVal) { showError('请选择月份'); return; }
+      if (!uploadedFile) { showError('请先上传明细表'); return; }
+      const validLocs = locations.filter(l => l.name.trim() && l.match.trim());
+      if (validLocs.length === 0) { showError('请至少配置一个地点'); return; }
+      if (!API_BASE_URL) { showError('请先配置后端连接地址'); return; }
+
+      const [year, month] = monthVal.split('-').map(Number);
+
+      const btn = document.getElementById('generateBtn');
+      const btnText = document.getElementById('btnText');
+      btn.disabled = true;
+      btnText.textContent = '生成中...';
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('resultArea').innerHTML = '';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        formData.append('year', year);
+        formData.append('month', month);
+        formData.append('locations', JSON.stringify(validLocs));
+        formData.append('filter_baogan', filterBaogan ? 'true' : 'false');
+
+        const response = await fetch(`${API_BASE_URL}/api/generate`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || '生成失败');
+        }
+
+        // 下载文件
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${year}年黄冈仓${month}月二级站点扎数统计.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showInfo('✅ Excel 文件已生成并下载！');
+      } catch (err) {
+        showError('生成失败：' + err.message);
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = '生成报表';
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
